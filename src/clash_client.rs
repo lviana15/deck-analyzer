@@ -1,4 +1,7 @@
-use crate::models::{Player, types::{Clan, ClanMember, Location}};
+use crate::models::{
+    Player,
+    types::{Clan, Location},
+};
 use reqwest::{Client, header};
 use serde::Deserialize;
 use std::error::Error;
@@ -56,7 +59,11 @@ impl ClashClient {
         )
     }
 
-    async fn send_request<T: for<'de> Deserialize<'de>>(&self, url: &str, query: Option<&[(&str, &str)]>) -> Result<T, Box<dyn Error>> {
+    async fn send_request<T: for<'de> Deserialize<'de>>(
+        &self,
+        url: &str,
+        query: Option<&[(&str, &str)]>,
+    ) -> Result<T, Box<dyn Error>> {
         let request = match query {
             Some(params) => self.http.get(url).query(params),
             None => self.http.get(url),
@@ -72,9 +79,13 @@ impl ClashClient {
         Ok(json_data)
     }
 
-    pub async fn get_locations(&self) -> Result<PaginatedResponse<Location>, Box<dyn Error>> {
+    pub async fn get_locations(&self) -> Result<Vec<Location>, Box<dyn Error>> {
         let url = self.endpoint("locations");
-        self.send_request(&url, None).await
+        let response = self
+            .send_request::<PaginatedResponse<Location>>(&url, None)
+            .await?;
+
+        Ok(response.items)
     }
 
     pub async fn get_clans_by_location(
